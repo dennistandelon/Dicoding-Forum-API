@@ -140,4 +140,76 @@ describe('/comments endpoints',()=>{
         });
 
     });
+
+    describe('when DELETE /threads/{thread_id}/comments/{comment_id}',()=>{
+        it('should response 403 when non owner try to delete', async ()=>{
+            const server = await createServer(container);
+            const {token} = await ServerTestHelper.getCredential(server);
+
+            await CommentsTableTestHelper.addComment({
+                id: 'comment-6868',
+                owner:'user-6969',
+                thread_id: 'thread-123',
+                content: 'apapun yang penting tes'
+            })
+
+            const response = await server.inject({
+                method: 'DELETE',
+                url: '/threads/thread-123/comments/comment-6868',
+                headers: {
+                    authorization: `Bearer ${token}`,
+                }
+            });
+
+            expect(response.statusCode).toEqual(403);
+            
+            const result = JSON.parse(response.payload);
+            expect(result.status).toEqual('fail');
+            expect(result.message).toEqual('Your are not the owner of this comment!');
+        });
+
+        it('should response 404 when the comment or thread not valid', async ()=>{
+            const server = await createServer(container);
+            const {token} = await ServerTestHelper.getCredential(server);
+
+            const response = await server.inject({
+                method: 'DELETE',
+                url: '/threads/thread-123/comments/comment-12390',
+                headers: {
+                    authorization: `Bearer ${token}`,
+                }
+            });
+
+            expect(response.statusCode).toEqual(404);
+
+            const result = JSON.parse(response.payload);
+            expect(result.status).toEqual('fail');
+        });
+
+        it('should response 200 when the comment successfully deleted', async ()=>{
+            const server = await createServer(container);
+            const {token, user_id} = await ServerTestHelper.getCredential(server);
+
+            await CommentsTableTestHelper.addComment({
+                id: 'comment-169',
+                owner: user_id,
+                thread_id: 'thread-123',
+                content: 'apapun yang penting tes'
+            })
+
+            
+            const response = await server.inject({
+                method: 'DELETE',
+                url: '/threads/thread-123/comments/comment-169',
+                headers: {
+                    authorization: `Bearer ${token}`,
+                }
+            });
+            
+            expect(response.statusCode).toEqual(200);
+            
+            const result = JSON.parse(response.payload);
+            expect(result.status).toEqual('success');
+        });
+    });
 });

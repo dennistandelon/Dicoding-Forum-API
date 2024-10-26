@@ -4,6 +4,7 @@ const NewThread = require('../../../Domains/threads/entities/NewThread');
 const AddedThread = require('../../../Domains/threads/entities/AddedThread');
 const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper');
 const UserTableTestHelper = require('../../../../tests/UsersTableTestHelper');
+const GetThread = require('../../../Domains/threads/entities/GetThread');
 
 describe('ThreadRepositoryPostgres', ()=>{
     afterEach(async () => {
@@ -48,12 +49,47 @@ describe('ThreadRepositoryPostgres', ()=>{
     describe('verify thread function', ()=>{
         it('should throw error 404 when thread not found', async ()=>{
 
-            const fakeGenerator = ()=>'123';
-
-            const threadRepository = new ThreadRepositoryPostgres(pool,fakeGenerator);
+            const threadRepository = new ThreadRepositoryPostgres(pool,{});
 
             expect(threadRepository.verifyThread('thread-123')).rejects.toThrowError('Thread not found');
         });
+
+        it('should not throw error 404 when thread found', async ()=>{
+
+            const threadRepository = new ThreadRepositoryPostgres(pool,{});
+            await UserTableTestHelper.addUser({id:'user-123',username:'pokemon'});
+            await ThreadsTableTestHelper.addThread({id:'thread-123',title:'dicoding testing', body:'cuman testing doang',owner:'user-123'});
+
+            await expect(threadRepository.verifyThread('thread-123')).resolves.not.toThrowError('Thread not found');
+        });
     });
 
+    describe('find thread function', ()=>{
+        it('should throw error 404 when thread not found', async ()=>{
+
+            const threadRepository = new ThreadRepositoryPostgres(pool,{});
+
+            expect(threadRepository.findThread('thread-123')).rejects.toThrowError('Thread not found');
+        });
+
+        it('should return correcly when thread found', async ()=>{
+
+            const threadRepository = new ThreadRepositoryPostgres(pool,{});
+            await UserTableTestHelper.addUser({id:'user-123',username:'pokemon'});
+            
+            await ThreadsTableTestHelper.addThread({id:'thread-123',title:'dicoding testing', body:'cuman testing doang',owner:'user-123'});
+
+            const result = await threadRepository.findThread('thread-123');
+
+            const expectedResult = new GetThread({
+                id: 'thread-123',
+                title: 'dicoding testing',
+                body: 'cuman testing doang',
+                date: new Date('2024-10-26T00:00:00.000Z'),
+                username: 'pokemon',
+                comments: []
+            });
+            expect(result).toStrictEqual(expectedResult);
+        });
+    });
 });

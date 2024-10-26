@@ -5,6 +5,7 @@ const container = require("../../container");
 const ServerTestHelper = require("../../../../tests/ServerTestHelper");
 const ThreadsTableTestHelper = require("../../../../tests/ThreadsTableTestHelper");
 const pool = require("../../database/postgres/pool");
+const CommentsTableTestHelper = require("../../../../tests/CommentsTableTestHelper");
 
 describe('/threads endpoints',()=>{
     afterAll(async () => {
@@ -116,5 +117,60 @@ describe('/threads endpoints',()=>{
             expect(result.data.addedThread).toBeDefined();
         });
 
+    });
+
+    describe('when GET /threads/{thread_id}', ()=>{
+        it('should response 404 when thread not found', async()=>{
+            const server = await createServer(container);
+
+            const response = await server.inject({
+                method: 'GET',
+                url: '/threads/thread-123469',
+            });
+
+            expect(response.statusCode).toEqual(404);
+
+            const result = JSON.parse(response.payload);
+            expect(result.status).toEqual('fail');
+            expect(result.message).toEqual('Thread not found');
+        });
+
+        it('should response 200 and return thread when not logged in', async()=>{
+            const server = await createServer(container);
+
+            await UsersTableTestHelper.addUser({id:'user-919', username:'Okarun'})
+            await ThreadsTableTestHelper.addThread({id:'thread-123',owner:'user-919'});
+
+            const response = await server.inject({
+                method: 'GET',
+                url: '/threads/thread-123',
+            });
+
+            expect(response.statusCode).toEqual(200);
+
+            const result = JSON.parse(response.payload);
+            expect(result.status).toEqual('success');
+            expect(result.data.thread).toBeDefined();
+        });
+
+        it('should response 200 and return thread and the details', async()=>{
+            const server = await createServer(container);
+
+            await UsersTableTestHelper.addUser({id:'user-99', username:'ayase momo'})
+            await ThreadsTableTestHelper.addThread({id:'thread-169',owner:'user-99'});
+            await CommentsTableTestHelper.addComment({id:'comment-1',thread_id:'thread-169', owner:'user-99'});
+
+            const response = await server.inject({
+                method: 'GET',
+                url: '/threads/thread-169',
+            });
+
+            expect(response.statusCode).toEqual(200);
+
+            const result = JSON.parse(response.payload);
+            expect(result.status).toEqual('success');
+            expect(result.data.thread).toBeDefined();
+            expect(result.data.thread.comments).toBeDefined();
+        });
     });
 });
