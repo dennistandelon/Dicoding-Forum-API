@@ -6,6 +6,8 @@ const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper
 const NewComment = require('../../../Domains/comments/entities/NewComment');
 const AddedComment = require('../../../Domains/comments/entities/AddedComment');
 const GetComment = require('../../../Domains/comments/entities/GetComment');
+const AuthorizationError = require('../../../Commons/exceptions/AuthorizationError');
+const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
 
 describe('CommentRepository Postgres', ()=>{
     afterEach(async ()=>{
@@ -57,15 +59,45 @@ describe('CommentRepository Postgres', ()=>{
 
     });
 
-    describe('verify comment function', ()=>{
+    describe('verify comment owner function', ()=>{
         it('should throw error when not comment owner', async ()=>{
 
             const fakeGenerator = ()=>'123';
 
             const commentRepository = new CommentRepositoryPostgres(pool,fakeGenerator);
 
-            expect(commentRepository.verifyCommentOwner('comment-123','user-123')).rejects.toThrowError('Your are not the owner of this comment!');
+            expect(commentRepository.verifyCommentOwner('comment-123','user-123')).rejects.toThrowError(AuthorizationError);
         });
+
+        it('should not throw error when is comment owner', async ()=>{
+
+            const fakeGenerator = ()=>'123';
+
+            const commentRepository = new CommentRepositoryPostgres(pool,fakeGenerator);
+
+            const owner = 'user-123'
+            await UsersTableTestHelper.addUser({id:owner});
+
+            const thread_id = 'thread-123';
+            await ThreadsTableTestHelper.addThread({
+                id: thread_id,
+                title: '123',
+                body: 'this is testing data',
+                owner: owner,
+            });
+
+            await CommentsTableTestHelper.addComment({
+                id: 'comment-123',
+                thread_id: 'thread-123',
+                owner: owner
+            });
+
+            await expect(commentRepository.verifyCommentOwner('comment-123','user-123')).resolves.not.toThrowError(AuthorizationError);
+        });
+
+    }); 
+
+    describe('verify comment Thread function', ()=>{
 
         it('should throw error when comment not in thread', async ()=>{
 
@@ -73,16 +105,37 @@ describe('CommentRepository Postgres', ()=>{
 
             const commentRepository = new CommentRepositoryPostgres(pool,fakeGenerator);
 
-            expect(commentRepository.verifyCommentThread('comment-123','thread-6969')).rejects.toThrowError('Comment not found in this thread!');
+            expect(commentRepository.verifyCommentThread('comment-123','thread-6969')).rejects.toThrowError(NotFoundError);
+        });
+
+        it('should not throw error when comment in thread', async ()=>{
+
+            const fakeGenerator = ()=>'123';
+
+            const commentRepository = new CommentRepositoryPostgres(pool,fakeGenerator);
+            
+            const owner = 'user-123'
+            await UsersTableTestHelper.addUser({id:owner});
+
+            const thread_id = 'thread-123';
+            await ThreadsTableTestHelper.addThread({
+                id: thread_id,
+                title: '123',
+                body: 'this is testing data',
+                owner: owner,
+            });
+
+            await CommentsTableTestHelper.addComment({
+                id: 'comment-123',
+                thread_id: 'thread-123',
+                owner: owner
+            });
+
+            expect(commentRepository.verifyCommentThread('comment-123','thread-123')).resolves.not.toThrowError(NotFoundError);
         });
     });
 
     describe('delete comment function', ()=>{
-        it('should throw error when comment not found', async ()=>{
-            const commentRepository = new CommentRepositoryPostgres(pool,{});
-
-            expect(commentRepository.softDeleteComment('comment-1212')).rejects.toThrowError('Comment not found');       
-        });
 
         it('should delete comment correctly', async ()=>{
             const owner = 'user-123'
@@ -119,6 +172,27 @@ describe('CommentRepository Postgres', ()=>{
 
     describe('get thread comments function',()=>{
 
+        it('should return empty comments correctly', async()=>{
+
+            const owner = 'user-123'
+            await UsersTableTestHelper.addUser({id:owner, username:'apapun'});
+
+            const thread_id = 'thread-123';
+            await ThreadsTableTestHelper.addThread({
+                id: thread_id,
+                title: '123',
+                body: 'this is testing data',
+                owner: owner,
+            });
+
+
+            const commentRepository = new CommentRepositoryPostgres(pool, {});
+            const result = await commentRepository.getThreadComments(thread_id);
+
+            expect(result).toHaveLength(0);
+            expect(result).toStrictEqual([]);
+        });
+
         it('should return comments correctly', async()=>{
 
             const owner = 'user-123'
@@ -132,13 +206,12 @@ describe('CommentRepository Postgres', ()=>{
                 owner: owner,
             })
 
-            const date = new Date('2024-10-26T00:00:00.000Z');
             const comment1 = {
                 id: 'comment-123',
                 content: '123 comment',
                 owner: 'user-123',
                 thread_id: thread_id,
-                date: date
+                date: new Date('2024-10-26T00:00:00.000Z')
             };
 
             const comment2 = {
@@ -146,7 +219,7 @@ describe('CommentRepository Postgres', ()=>{
                 content: '231 comment',
                 owner: 'user-123',
                 thread_id: thread_id,
-                date: date
+                date: new Date('2024-10-27T00:00:00.000Z')
             };
 
             await CommentsTableTestHelper.addComment(comment2);
@@ -156,8 +229,22 @@ describe('CommentRepository Postgres', ()=>{
             const result = await commentRepository.getThreadComments(thread_id);
 
             expect(result).toHaveLength(2);
-            expect(result[0]).toBeInstanceOf(GetComment);
-            expect(result[1]).toBeInstanceOf(GetComment);
+            expect(result).toStrictEqual([
+                new GetComment({
+                    id: 'comment-123',
+                    content: '123 comment',
+                    username: 'apapun',
+                    date: new Date('2024-10-26T00:00:00.000Z'),
+                    is_deleted: false
+                }),
+                new GetComment({
+                    id: 'comment-231',
+                    content: '231 comment',
+                    username: 'apapun',
+                    date: new Date('2024-10-27T00:00:00.000Z'),
+                    is_deleted: false
+                })
+            ]);
         });
     });
 });

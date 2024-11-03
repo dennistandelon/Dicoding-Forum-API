@@ -1,3 +1,5 @@
+/* istanbul ignore file */
+
 const ServerTestHelper = {
     // Generate Random user and login it to get token
     async getCredential(server){

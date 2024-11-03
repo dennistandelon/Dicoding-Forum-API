@@ -34,13 +34,7 @@ class CommentRepositoryPostgres extends CommentRepository{
             values: [id]
         };
 
-        const { rowCount } = await this._pool.query(query);
-
-        if (!rowCount) {
-            throw new NotFoundError('Comment not found');
-        }
-
-        return rowCount;
+        await this._pool.query(query);
     }
 
     async verifyCommentOwner(id, user){
@@ -54,8 +48,6 @@ class CommentRepositoryPostgres extends CommentRepository{
         if (!rowCount) {
             throw new AuthorizationError('Your are not the owner of this comment!');
         }
-
-        return rowCount;
     }
 
     async verifyCommentThread(comment_id, thread_id){
@@ -69,8 +61,6 @@ class CommentRepositoryPostgres extends CommentRepository{
         if (!rowCount) {
             throw new NotFoundError('Comment not found in this thread!');
         }
-
-        return rowCount;
     }
 
     async getThreadComments(id){

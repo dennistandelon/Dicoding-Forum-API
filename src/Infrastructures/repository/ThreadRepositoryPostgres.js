@@ -37,8 +37,6 @@ class ThreadRepositoryPostgres extends ThreadRepository{
         if (!rowCount) {
             throw new NotFoundError('Thread not found');
         }
-
-        return rowCount;
     }
 
     async findThread(id){
@@ -47,11 +45,7 @@ class ThreadRepositoryPostgres extends ThreadRepository{
             values: [id]
         }
 
-        const { rowCount, rows } = await this._pool.query(query);
-
-        if (!rowCount) {
-            throw new NotFoundError('Thread not found');
-        }
+        const { rows } = await this._pool.query(query);
 
         return new GetThread({...rows[0], comments: []});
     }

@@ -5,6 +5,7 @@ const AddedThread = require('../../../Domains/threads/entities/AddedThread');
 const ThreadsTableTestHelper = require('../../../../tests/ThreadsTableTestHelper');
 const UserTableTestHelper = require('../../../../tests/UsersTableTestHelper');
 const GetThread = require('../../../Domains/threads/entities/GetThread');
+const NotFoundError = require('../../../Commons/exceptions/NotFoundError');
 
 describe('ThreadRepositoryPostgres', ()=>{
     afterEach(async () => {
@@ -51,7 +52,7 @@ describe('ThreadRepositoryPostgres', ()=>{
 
             const threadRepository = new ThreadRepositoryPostgres(pool,{});
 
-            expect(threadRepository.verifyThread('thread-123')).rejects.toThrowError('Thread not found');
+            expect(threadRepository.verifyThread('thread-123')).rejects.toThrowError(NotFoundError);
         });
 
         it('should not throw error 404 when thread found', async ()=>{
@@ -60,17 +61,11 @@ describe('ThreadRepositoryPostgres', ()=>{
             await UserTableTestHelper.addUser({id:'user-123',username:'pokemon'});
             await ThreadsTableTestHelper.addThread({id:'thread-123',title:'dicoding testing', body:'cuman testing doang',owner:'user-123'});
 
-            await expect(threadRepository.verifyThread('thread-123')).resolves.not.toThrowError('Thread not found');
+            await expect(threadRepository.verifyThread('thread-123')).resolves.not.toThrowError(NotFoundError);
         });
     });
 
     describe('find thread function', ()=>{
-        it('should throw error 404 when thread not found', async ()=>{
-
-            const threadRepository = new ThreadRepositoryPostgres(pool,{});
-
-            expect(threadRepository.findThread('thread-123')).rejects.toThrowError('Thread not found');
-        });
 
         it('should return correcly when thread found', async ()=>{
 
