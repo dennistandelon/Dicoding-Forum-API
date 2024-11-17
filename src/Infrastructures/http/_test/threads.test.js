@@ -6,6 +6,7 @@ const ServerTestHelper = require("../../../../tests/ServerTestHelper");
 const ThreadsTableTestHelper = require("../../../../tests/ThreadsTableTestHelper");
 const pool = require("../../database/postgres/pool");
 const CommentsTableTestHelper = require("../../../../tests/CommentsTableTestHelper");
+const LikesTableTestHelper = require("../../../../tests/LikesTableTestHelper");
 
 describe('/threads endpoints',()=>{
     afterAll(async () => {
@@ -159,6 +160,7 @@ describe('/threads endpoints',()=>{
             await UsersTableTestHelper.addUser({id:'user-99', username:'ayase momo'})
             await ThreadsTableTestHelper.addThread({id:'thread-169',owner:'user-99'});
             await CommentsTableTestHelper.addComment({id:'comment-1',thread_id:'thread-169', owner:'user-99'});
+            await LikesTableTestHelper.addLike({id:'like-123',comment_id:'comment-1',owner:'user-99'});
 
             const response = await server.inject({
                 method: 'GET',
@@ -171,6 +173,7 @@ describe('/threads endpoints',()=>{
             expect(result.status).toEqual('success');
             expect(result.data.thread).toBeDefined();
             expect(result.data.thread.comments).toBeDefined();
+            expect(result.data.thread.comments[0].likeCount).toStrictEqual(1);
         });
     });
 });

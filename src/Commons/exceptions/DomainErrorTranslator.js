@@ -35,6 +35,12 @@ DomainErrorTranslator._directories = {
   'NEW_REPLY.NOT_MEET_DATA_TYPE_SPECIFICATION': new InvariantError(
     'unable to post new reply due to invalid data type',
   ),
+  'NEW_REPLY.NOT_CONTAIN_NEEDED_PROPERTY': new InvariantError(
+    'unable to put like due to uncomplete property',
+  ),
+  'NEW_REPLY.NOT_MEET_DATA_TYPE_SPECIFICATION': new InvariantError(
+    'unable to put like due to invalid data type',
+  ),
 };
 
 module.exports = DomainErrorTranslator;

@@ -109,7 +109,7 @@ describe('ReplyRepository Postgres', ()=>{
                 owner: owner,
             });
 
-            expect(replyRepository.verifyReplyStatus('reply-123','comment-123', 'thread-123')).resolves.not.toThrowError(AuthorizationError);
+            await expect(replyRepository.verifyReplyStatus('reply-123','comment-123', 'thread-123')).resolves.not.toThrowError(AuthorizationError);
         });
     });
 
@@ -153,7 +153,7 @@ describe('ReplyRepository Postgres', ()=>{
                 owner: owner,
             });
 
-            expect(replyRepository.verifyReplyOwner('reply-123','user-123')).resolves.not.toThrowError(AuthorizationError);
+            await expect(replyRepository.verifyReplyOwner('reply-123','user-123')).resolves.not.toThrowError(AuthorizationError);
         });
     });
 
