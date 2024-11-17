@@ -77,12 +77,14 @@ describe('GetThreadDetailUseCase', ()=>{
                 username: 'pokemon',
                 date: new Date('2024-10-26T00:00:00Z'),
                 content: '**komentar telah dihapus**',
+                likeCount: 1,
                 replies: [],
             }, {
                 id: 'comment-231',
                 username: 'digimon',
                 date: new Date('2024-10-26T00:00:00Z'),
                 content: '231 comment',
+                likeCount: 0,
                 replies: [{
                     id: 'reply-123',
                     username: 'pokemon',
