@@ -1,10 +1,10 @@
 const CommentRepository = require('../../../Domains/comments/CommentRepository');
 const GetComment = require('../../../Domains/comments/entities/GetComment');
+const LikeRepository = require('../../../Domains/likes/LikeRepository');
 const GetReply = require('../../../Domains/replies/entities/GetReply');
 const ReplyRepository = require('../../../Domains/replies/ReplyRepository');
 const GetThread = require('../../../Domains/threads/entities/GetThread');
 const ThreadRepository = require('../../../Domains/threads/ThreadRepository');
-const comments = require('../../../Interfaces/http/api/comments');
 const GetThreadDetailUseCase = require('../GetThreadDetailUseCase');
 
 describe('GetThreadDetailUseCase', ()=>{
@@ -62,7 +62,19 @@ describe('GetThreadDetailUseCase', ()=>{
             })];
         });
 
-        const getThreadDetailUseCase = new GetThreadDetailUseCase({threadRepository:mockThreadRepository, commentRepository: mockCommentRepository, replyRepository: mockReplyRepository});
+        const mockLikeRepository = new LikeRepository();
+        mockLikeRepository.getLikeCount = jest.fn().mockImplementation(()=>{
+            return [
+                {
+                    comment_id: "comment-123",
+                },
+                {
+                    comment_id: "comment-123",
+                },
+            ];
+        });
+
+        const getThreadDetailUseCase = new GetThreadDetailUseCase({threadRepository:mockThreadRepository, commentRepository: mockCommentRepository, replyRepository: mockReplyRepository, likeRepository: mockLikeRepository});
 
         const result = await getThreadDetailUseCase.execute(payload);
 
@@ -77,7 +89,7 @@ describe('GetThreadDetailUseCase', ()=>{
                 username: 'pokemon',
                 date: new Date('2024-10-26T00:00:00Z'),
                 content: '**komentar telah dihapus**',
-                likeCount: 1,
+                likeCount: 2,
                 replies: [],
             }, {
                 id: 'comment-231',
